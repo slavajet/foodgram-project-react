@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class Recipe(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
@@ -59,6 +60,14 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
 
+class Ingredient(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Название')
+    measurement_unit = models.CharField(max_length=200, verbose_name='Единица измерения')
 
+    def __str__(self):
+        return f'{self.name}, {self.measurement_unit}'
 
-
+    class Meta:
+        ordering = ('name',)
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
