@@ -4,10 +4,10 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class Recipe(models.Model):
-    name = models.CharField('Название', max_length=200)
-    text = models.TextField('Описание')
-    cooking_time = models.IntegerField('Время приготовления в минутах')
-    image = models.URLField('Изображение', blank=True, null=True)
+    name = models.CharField(max_length=200, verbose_name='Название')
+    text = models.TextField(verbose_name='Описание')
+    cooking_time = models.IntegerField(verbose_name='Время приготовления в минутах')
+    image = models.URLField(blank=True, null=True, verbose_name='Изображение')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -32,3 +32,33 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Название')
+    color = models.CharField(
+        max_length=7,
+        null=True,
+        blank=True,
+        verbose_name='Цвет в HEX'
+    )
+    slug = models.SlugField(
+        max_length=200,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name='Уникальный слаг'
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('slug',)
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+
+
+
+
