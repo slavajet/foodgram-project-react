@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'import_export',
     'recipes',
+    'users',
+    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -90,6 +92,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.UserCreateSerializer',
+        'user': 'users.serializers.UserSerializer',
+        'token_create': 'djoser.serializers.TokenCreateSerializer',
+    },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+    },
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    'USER_CREATE_PASSWORD_RETYPE': False,
+}
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
 LANGUAGE_CODE = 'en-us'
 
