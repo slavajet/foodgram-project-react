@@ -42,7 +42,7 @@ class Ingredient(models.Model):
     при приготовлении рецепта. У каждого ингредиента есть название и единица измерения,
     которые могут быть использованы для определения количества ингредиентов в рецептах.
     """
-    name = models.CharField(max_length=200, unique=True, verbose_name='Название')
+    name = models.CharField(max_length=200, verbose_name='Название')
     measurement_unit = models.CharField(max_length=200, verbose_name='Единица измерения')
 
     def __str__(self):
