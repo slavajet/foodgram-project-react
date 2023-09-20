@@ -1,7 +1,9 @@
 from django.contrib import admin
-from .models import Tag, Ingredient, Recipe, RecipeIngredient
 from import_export.admin import ImportExportModelAdmin
+
+from .models import Ingredient, Recipe, RecipeIngredient, Tag
 from .resources import IngredientResource
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
