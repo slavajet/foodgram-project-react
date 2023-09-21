@@ -10,6 +10,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('is_staff',)
     search_fields = ('email', 'username', 'first_name', 'last_name')
 
+
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('subscriber', 'subscribing')

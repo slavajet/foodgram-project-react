@@ -34,16 +34,21 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
+
 class Ingredient(models.Model):
     """
     Модель для ингредиентов.
 
     Ингредиенты представляют собой отдельные компоненты, которые используются
-    при приготовлении рецепта. У каждого ингредиента есть название и единица измерения,
-    которые могут быть использованы для определения количества ингредиентов в рецептах.
+    при приготовлении рецепта. У каждого ингредиента есть название и единица
+    измерения, которые могут быть использованы для определения количества
+    ингредиентов в рецептах.
     """
     name = models.CharField(max_length=200, verbose_name='Название')
-    measurement_unit = models.CharField(max_length=200, verbose_name='Единица измерения')
+    measurement_unit = models.CharField(
+        max_length=200,
+        verbose_name='Единица измерения'
+    )
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
@@ -58,13 +63,13 @@ class Recipe(models.Model):
     """
     Модель для рецептов.
 
-    Рецепты представляют собой кулинарные рецепты, которые пользователи могут создавать
-    и просматривать на сайте. У каждого рецепта есть название, описание, время приготовления,
-    изображение, автор, теги и ингредиенты.
+    Рецепты представляют собой кулинарные рецепты, которые пользователи могут
+    создавать и просматривать на сайте. У каждого рецепта есть название,
+    описание, время приготовления, изображение, автор, теги и ингредиенты.
     """
     name = models.CharField(max_length=200, verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.IntegerField(verbose_name='Время приготовления в минутах')
+    cooking_time = models.IntegerField(verbose_name='Время приготовления')
     image = models.URLField(blank=True, null=True, verbose_name='Изображение')
     author = models.ForeignKey(
         User,
@@ -93,12 +98,14 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
+
 class RecipeIngredient(models.Model):
     """
     Модель для ингредиентов рецепта.
 
-    Каждый объект этой модели представляет собой ингредиент, используемый в конкретном рецепте.
-    Модель описывает, какое колличество ингредиента необходимо для приготовления рецепта.
+    Каждый объект этой модели представляет собой ингредиент, используемый в
+    конкретном рецепте. Модель описывает, какое колличество ингредиента
+    необходимо для приготовления рецепта.
     """
     recipe = models.ForeignKey(
         Recipe,
@@ -111,7 +118,7 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Ингредиент'
     )
-    amount = models.PositiveIntegerField(verbose_name='Колличество ингридиентов')
+    amount = models.PositiveIntegerField(verbose_name='Кол-во ингридиентов')
 
     def __str__(self):
         return f"{self.recipe.name} - {self.ingredient.name}"

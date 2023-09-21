@@ -3,12 +3,15 @@ from django.db import models
 
 
 class CustomUser(AbstractUser):
+    """
+    Модель пользователей, расширяющая стандартную модель AbstractUser.
+    """
     email = models.EmailField(unique=True, max_length=254)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     password = models.CharField(max_length=150)
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name'] 
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     def __str__(self):
         return self.username
@@ -20,6 +23,9 @@ class CustomUser(AbstractUser):
 
 
 class Subscription(models.Model):
+    """
+    Модель подписок между пользователями.
+    """
     subscriber = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
