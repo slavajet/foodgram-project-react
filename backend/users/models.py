@@ -17,3 +17,26 @@ class CustomUser(AbstractUser):
         ordering = ['-id']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='Подписчик',
+    )
+    subscribing = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name='Пользователь, на которого подписались',
+    )
+
+    class Meta:
+        unique_together = ('subscriber', 'subscribing')
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.subscriber} подписан на {self.subscribing}'
