@@ -126,3 +126,33 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
+
+
+class Favorites(models.Model):
+    """
+    Модель для добавления рецептов в избранное пользователей.
+
+    Модель позволяет пользователям добавлять рецепты в свой список избранного.
+    Каждый пользователь может добавить в избранное рецепты, которые он хочет
+    сохранить для последующего просмотра.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite_recipes',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorited_by_users',
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        unique_together = ('user', 'recipe')
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные рецепты'
+
+    def __str__(self):
+        return f'{self.user} добавил в избранное рецепт "{self.recipe}"'
