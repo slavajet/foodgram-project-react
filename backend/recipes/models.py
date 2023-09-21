@@ -26,7 +26,7 @@ class Tag(models.Model):
         verbose_name='Уникальный слаг'
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     class Meta:
@@ -50,7 +50,7 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения'
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name}, {self.measurement_unit}'
 
     class Meta:
@@ -90,7 +90,7 @@ class Recipe(models.Model):
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     class Meta:
@@ -120,7 +120,7 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveIntegerField(verbose_name='Кол-во ингридиентов')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.recipe.name} - {self.ingredient.name}"
 
     class Meta:
@@ -154,5 +154,33 @@ class Favorites(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные рецепты'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.user} добавил в избранное рецепт "{self.recipe}"'
+    
+
+class ShoppingList(models.Model):
+    """
+    Модель для списка покупок.
+
+    Эта модель представляет собой список покупок, связанный с конкретным
+    пользователем и рецептом. Пользователи могут добавлять рецепты в свой
+    список покупок.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_list',
+        verbose_name='Пользователь',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+    )
+
+    class Meta:
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+
+    def __str__(self) -> str:
+        return f'{self.user} добавил в список покупок рецепт: {self.recipe.name}'

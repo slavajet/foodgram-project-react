@@ -1,7 +1,9 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
-from .models import Ingredient, Recipe, RecipeIngredient, Tag, Favorites
+from .models import (Ingredient, Recipe, RecipeIngredient,
+                     Tag, Favorites, ShoppingList)
+
 from .resources import IngredientResource
 
 
@@ -41,3 +43,10 @@ class FavoritesAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')
     list_filter = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__title')
+
+
+@admin.register(ShoppingList)
+class ShoppingListAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
