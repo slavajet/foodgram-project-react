@@ -5,6 +5,8 @@ from djoser.serializers import (
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from recipes.models import Tag
+
 User = get_user_model()
 
 
@@ -25,3 +27,9 @@ class CustomUserSerializer(DjoserUserSerializer):
         if user.is_authenticated:
             return user.subscriptions.filter(subscriber=user).exists()
         return None
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'color', 'slug']
