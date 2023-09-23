@@ -5,6 +5,9 @@ from .serializers import (CustomUserSerializer, TagSerializer,
                           IngredientSerializer)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import IngredientFilter
 
 
 class CustomUserViewSet(DjoserUserViewSet):
@@ -19,8 +22,11 @@ class TagViewSet(ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class IngridientViewSet(ReadOnlyModelViewSet):
+class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = IngredientFilter
+    search_fields = ['name']
