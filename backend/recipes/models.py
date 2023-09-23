@@ -70,7 +70,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
-    image = models.URLField(blank=True, null=True, verbose_name='Изображение')
+    image = models.ImageField(blank=True, null=True, verbose_name='Изображение')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
