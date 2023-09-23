@@ -10,7 +10,7 @@ User = get_user_model()
 
 class CustomUserCreateSerializer(DjoserUserCreateSerializer):
     class Meta:
-        model = User 
+        model = User
         fields = ('email', 'username', 'password', 'first_name', 'last_name')
 
 
@@ -22,5 +22,6 @@ class CustomUserSerializer(DjoserUserSerializer):
         fields = ('id', 'email', 'username', 'first_name', 'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, user):
-        return (user.is_authenticated
-                and user.subscriptions.filter(subscriber=user).exists())
+        if user.is_authenticated:
+            return user.subscriptions.filter(subscriber=user).exists()
+        return None
