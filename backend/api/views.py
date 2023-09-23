@@ -1,8 +1,8 @@
 from djoser.views import UserViewSet as DjoserUserViewSet
 from .permissions import AllowAllOrIsAuthenticated
-from api.serializers import CustomUserSerializer
-from recipes.models import Tag
-from .serializers import TagSerializer
+from recipes.models import Tag, Ingredient
+from .serializers import (CustomUserSerializer, TagSerializer,
+                          IngredientSerializer)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -15,5 +15,12 @@ class CustomUserViewSet(DjoserUserViewSet):
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = None
+
+
+class IngridientViewSet(ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None
