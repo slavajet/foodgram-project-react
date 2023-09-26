@@ -92,3 +92,20 @@ class RecipeSerializer(serializers.ModelSerializer):
             return obj.shoppinglist_set.filter(user=request.user).exists()
         return False
 
+    def add_ingredients(self, ingredients) -> None:
+        ingredients_list = [
+            RecipeIngredient(
+                ingredient=Ingredient.objects.get(id=current_ingredient['id']),
+                recipe=self,
+                amount=current_ingredient['amount']
+            ) for current_ingredient in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(ingredients_list)
+
+    def create(self, validated_data) -> Recipe:
+        tags_data = validated_data.pop('tags', [])
+        ingredients_data = validated_data.pop('ingredients', [])
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+        self.add_ingredients(ingredients_data)
+        return recipe

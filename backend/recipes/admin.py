@@ -9,7 +9,7 @@ from .resources import IngredientResource
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'color', 'slug')
+    list_display = ('id', 'name', 'color', 'slug')
     list_filter = ('name', 'color')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}

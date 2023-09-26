@@ -1,6 +1,6 @@
 from djoser.views import UserViewSet as DjoserUserViewSet
 from .permissions import AllowAllOrIsAuthenticated
-from recipes.models import Tag, Ingredient, Recipe
+from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
 from .serializers import (CustomUserSerializer, TagSerializer,
                           IngredientSerializer, RecipeSerializer)
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
@@ -39,15 +39,18 @@ class RecipeViewSet(ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(author=self.request.user)
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
         data = request.data.copy()
         data['author'] = request.user.id
+        tags_data = data.pop('tags', [])
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        recipe = serializer.instance
+        recipe.tags.set(tags_data)
         headers = self.get_success_headers(serializer.data)
         response_data = serializer.data
         response_data['id'] = serializer.instance.id
