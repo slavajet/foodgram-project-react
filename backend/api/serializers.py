@@ -4,7 +4,7 @@ from djoser.serializers import (
 )
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
+from .validation import validate_tags, validate_cooking_time, validate_ingredients
 from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
 
 import base64
@@ -89,6 +89,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'name', 'image', 'text', 'cooking_time')
 
+    def validate(self, data):
+        tags = data.get('tags', [])
+        cooking_time = data.get('cooking_time')
+        ingredients = data.get('ingredients', [])
+
+        validate_tags(tags)
+        validate_cooking_time(cooking_time)
+        validate_ingredients(ingredients)
+
+        return data
+
     def add_ingredients(self, ingredients, recipe: Recipe) -> None:
         ingredients_to_create = [
             RecipeIngredient(
@@ -112,6 +123,21 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         context = {'request': request}
         return RecipeReadSerializer(instance, context=context).data
+
+    def update(self, instance: Recipe, validated_data) -> Recipe:
+        instance.tags.clear()
+        instance.ingredients.clear()
+        instance.name = validated_data['name']
+        instance.text = validated_data['text']
+        instance.cooking_time = validated_data['cooking_time']
+        instance.image = validated_data['image']
+        instance.save()
+        tags = validated_data.get('tags', [])
+        instance.tags.set(tags)
+        ingredients = validated_data.get('ingredients', [])
+        self.add_ingredients(ingredients, instance)
+
+        return instance
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
