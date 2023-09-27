@@ -8,7 +8,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .filters import IngredientFilter
+from .filters import IngredientFilter, RecipeFilter
 from rest_framework.response import Response
 from rest_framework import status
 import logging
@@ -33,12 +33,15 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     pagination_class = None
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = IngredientFilter
-    search_fields = ['name']
+    search_fields = ['author', 'tags']
 
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = RecipeFilter
+    search_fields = ['name']
 
     def get_serializer_class(self):
         if self.action == 'GET':
