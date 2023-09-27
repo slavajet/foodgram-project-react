@@ -1,5 +1,5 @@
 from djoser.views import UserViewSet as DjoserUserViewSet
-from .permissions import AllowAllOrIsAuthenticated
+from .permissions import AllowAllOrIsAuthenticated, IsRecipeAuthorOrReadOnly
 from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
 from .serializers import (CustomUserSerializer, TagSerializer,
                           IngredientSerializer, RecipeReadSerializer,
@@ -38,7 +38,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsRecipeAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = RecipeFilter
     search_fields = ['name']
