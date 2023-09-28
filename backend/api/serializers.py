@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .validation import validate_tags, validate_cooking_time, validate_ingredients
 from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
+from users.models import Subscription
 
 import base64
 from django.core.files.base import ContentFile
@@ -21,6 +22,9 @@ class CustomUserCreateSerializer(DjoserUserCreateSerializer):
 
 class CustomUserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    id = serializers.IntegerField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = User
@@ -31,6 +35,58 @@ class CustomUserSerializer(DjoserUserSerializer):
         if user.is_authenticated:
             return user.subscriptions.filter(subscriber=user).exists()
         return None
+
+
+class UserSubscribeSerializer(CustomUserSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    id = serializers.IntegerField(default=serializers.CurrentUserDefault())
+
+    class Meta(CustomUserSerializer.Meta):
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes', 'recipes_count')
+
+    def validate(self, data):
+        id = data.get('id')
+        request = self.context['request']
+        if id == request.user.id:
+            raise serializers.ValidationError('Нельзя подписаться на себя.')
+        return data
+
+    def get_recipes(self, obj):
+        user = obj.subscriber
+        recipes = user.recipes.all()[:3]
+        return list(RecipeShortSerializer(recipes, many=True).data)
+
+    def get_recipes_count(self, user) -> int:
+        return Recipe.objects.filter(author=user).count()
+
+
+class SubscriptionListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='subscriber.id')
+    email = serializers.CharField(source='subscriber.email')
+    username = serializers.CharField(source='subscriber.username')
+    first_name = serializers.CharField(source='subscriber.first_name')
+    last_name = serializers.CharField(source='subscriber.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_is_subscribed(self, obj):
+        return True
+
+    def get_recipes(self, obj):
+        user = obj.subscriber
+        recipes = user.recipes.all()[:3]
+        return RecipeShortSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        user = obj.subscriber
+        return Recipe.objects.filter(author=user).count()
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -52,6 +108,19 @@ class Base64ImageField(serializers.ImageField):
             ext = format.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name=f'image.{ext}')
         return super().to_internal_value(data)
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
