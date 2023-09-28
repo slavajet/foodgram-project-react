@@ -8,7 +8,7 @@ from .serializers import (CustomUserSerializer, TagSerializer,
                           RecipeWriteSerializer, UserSubscribeSerializer,
                           SubscriptionListSerializer)
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import IngredientFilter, RecipeFilter
@@ -19,7 +19,7 @@ from rest_framework.decorators import action
 
 class CustomUserViewSet(DjoserUserViewSet):
     serializer_class = CustomUserSerializer
-    permission_classes = [AllowAllOrIsAuthenticated]
+    permission_classes = [AllowAllOrIsAuthenticated, IsAuthenticated]
     pagination_class = Paginator
 
     @action(detail=True, methods=['post'])

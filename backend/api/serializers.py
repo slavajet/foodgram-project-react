@@ -83,8 +83,19 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         user = obj.subscriber
-        recipes = user.recipes.all()[:3]
-        return RecipeShortSerializer(recipes, many=True).data
+        request = self.context.get('request')
+
+        if request:
+            recipes_limit = request.query_params.get('recipes_limit')
+            if recipes_limit:
+                recipes = user.recipes.all()[:int(recipes_limit)]
+            else:
+                recipes = user.recipes.all()
+
+            return RecipeShortSerializer(recipes, many=True).data
+
+        return []
+
 
     def get_recipes_count(self, obj):
         user = obj.subscriber
