@@ -22,9 +22,6 @@ class CustomUserCreateSerializer(DjoserUserCreateSerializer):
 
 class CustomUserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-    id = serializers.IntegerField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = User
@@ -54,8 +51,13 @@ class UserSubscribeSerializer(CustomUserSerializer):
         return data
 
     def get_recipes(self, obj):
-        user = obj.subscriber
-        recipes = user.recipes.all()[:3]
+        user = obj
+        recipes_limit = self.context['request'].query_params.get('recipes_limit')
+        recipes = user.recipes.all()
+
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+
         return list(RecipeShortSerializer(recipes, many=True).data)
 
     def get_recipes_count(self, user) -> int:

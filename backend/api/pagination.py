@@ -6,3 +6,4 @@ PAGE_SIZE = 6
 class Paginator(PageNumberPagination):
     page_size = PAGE_SIZE
     page_size_query_param = 'limit'
+    recipes_limit_query_param = 'recipes_limit'
