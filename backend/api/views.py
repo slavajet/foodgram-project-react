@@ -1,3 +1,5 @@
+from django.db.models import Sum
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status
@@ -8,21 +10,22 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Ingredient, Recipe, ShoppingList, Tag
 from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import Paginator
 from .permissions import AllowAllOrIsAuthenticated, IsRecipeAuthorOrReadOnly
 from .serializers import (CustomUserSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
-                          TagSerializer, UserRecipeSerializer)
+                          RecipeReadSerializer, RecipeShortSerializer,
+                          RecipeWriteSerializer, TagSerializer,
+                          UserRecipeSerializer)
 
 
 class CustomUserViewSet(DjoserUserViewSet):
     """
     Пользовательский ViewSet для пользователей.
-    Этот ViewSet обеспечивает работу с пользователями, включая действия, 
+    Этот ViewSet обеспечивает работу с пользователями, включая действия,
     такие как подписка и отписка от других пользователей.
     """
     serializer_class = CustomUserSerializer
@@ -146,10 +149,81 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         """
         Создание нового рецепта.
         Метод создает новый рецепт, связывает его с текущим авторизованным
         пользователем и сохраняет его.
         """
         serializer.save(author=self.request.user)
+
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=[IsAuthenticated],
+        url_path='shopping_cart',
+        url_name='shopping_cart',
+    )
+    def shopping_cart(self, request, pk=None):
+        """
+        Метод (добавления / удаления) рецпта (в / из) списка покупок.
+        """
+        user = request.user
+        recipe = Recipe.objects.filter(pk=pk).first()
+        if not recipe:
+            return Response(
+                {'errors': 'Рецепт не существует.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if ShoppingList.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': 'Рецепт уже добавлен в список покупок.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            ShoppingList.objects.create(user=user, recipe=recipe)
+            serializer = RecipeShortSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            instance = ShoppingList.objects.filter(user=user, recipe=recipe).first()
+            if not instance:
+                return Response(
+                    {'errors': 'Рецепт отсутствует в списке покупок.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated],
+    )
+    def download_shopping_cart(self, request) -> HttpResponse:
+        """
+        Метод позволяющий скачать пользователю список всех ингредиентов и их
+        колличество из всех рецептов добавленных в список покупок.
+        """
+        user = request.user
+
+        ingredients = (
+            ShoppingList.objects
+            .filter(user=user)
+            .values(
+                'recipe__recipe_ingredients__ingredient__name',
+                'recipe__recipe_ingredients__ingredient__measurement_unit'
+            )
+            .annotate(amount=Sum('recipe__recipe_ingredients__amount'))
+        )
+
+        shopping_cart = [f'Список покупок {user}.\n']
+        for ingredient in ingredients:
+            shopping_cart.append(
+                f'{ingredient["recipe__recipe_ingredients__ingredient__name"]} - '
+                f'{ingredient["amount"]} '
+                f'{ingredient["recipe__recipe_ingredients__ingredient__measurement_unit"]}\n'
+            )
+
+        file_name = f'{user.username}_shopping_cart.txt'
+        response = HttpResponse(shopping_cart, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={file_name}'
+        return response
