@@ -10,7 +10,7 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import Ingredient, Recipe, ShoppingList, Tag
+from recipes.models import Ingredient, Recipe, ShoppingList, Tag, Favorites
 from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
@@ -164,7 +164,7 @@ class RecipeViewSet(ModelViewSet):
         url_path='shopping_cart',
         url_name='shopping_cart',
     )
-    def shopping_cart(self, request, pk=None):
+    def shopping_cart(self, request, pk=None) -> Response | None:
         """
         Метод (добавления / удаления) рецпта (в / из) списка покупок.
         """
@@ -227,3 +227,39 @@ class RecipeViewSet(ModelViewSet):
         response = HttpResponse(shopping_cart, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={file_name}'
         return response
+
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=[IsAuthenticated],
+        url_path='favorite',
+        url_name='favorite',
+    )
+    def favorite_recipe(self, request, pk=None):
+        user = request.user
+        recipe = Recipe.objects.filter(pk=pk).first()
+        if not recipe:
+            return Response(
+                {'errors': 'Рецепт не существует.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if request.method == 'POST':
+            if Favorites.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': 'Рецепт уже добавлен в избранное.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Favorites.objects.create(user=user, recipe=recipe)
+            serializer = RecipeShortSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        elif request.method == 'DELETE':
+            instance = Favorites.objects.filter(user=user, recipe=recipe).first()
+            if not instance:
+                return Response(
+                    {'errors': 'Рецепт не найден в избранном.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
