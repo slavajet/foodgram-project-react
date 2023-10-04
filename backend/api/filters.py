@@ -1,6 +1,8 @@
 import django_filters
+from django.contrib.auth import get_user_model
+from recipes.models import Ingredient, Recipe
 
-from recipes.models import Ingredient, Recipe, Tag
+User = get_user_model()
 
 
 class IngredientFilter(django_filters.FilterSet):
@@ -12,31 +14,33 @@ class IngredientFilter(django_filters.FilterSet):
 
 
 class RecipeFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(field_name='author', lookup_expr='iexact')
-    tags = django_filters.ModelMultipleChoiceFilter(
-        field_name='tags__slug',
-        queryset=Tag.objects.all(),
-        to_field_name='slug'
+    author = django_filters.ModelChoiceFilter(
+        queryset=User.objects.all()
     )
-    is_in_shopping_cart = django_filters.BooleanFilter(
-        method='filter_is_in_shopping_cart'
+    tags = django_filters.AllValuesMultipleFilter(
+        field_name='tags__slug'
     )
-    is_favorited = django_filters.BooleanFilter(
-        method='filter_is_favorited'
+    is_favorited = django_filters.NumberFilter(
+        method='get_is_favorited'
+    )
+    is_in_shopping_cart = django_filters.NumberFilter(
+        method='get_is_in_shopping_cart'
     )
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']
+        fields = ['author', 'tags', 'is_favorited', 'is_in_shopping_cart']
 
-    def filter_is_in_shopping_cart(self, queryset, name, value):
-        user = self.request.user
-        if value:
-            return queryset.filter(shoppinglist__user=user)
+    def get_is_favorited(self, queryset, name, value):
+        if value and self.request.user.is_authenticated:
+            return Recipe.objects.filter(
+                favorited_by_users__user=self.request.user
+            )
         return queryset
 
-    def filter_is_favorited(self, queryset, name, value):
-        user = self.request.user
-        if value:
-            return queryset.filter(favorited_by_users__user=user)
+    def get_is_in_shopping_cart(self, queryset, name, value):
+        if value and self.request.user.is_authenticated:
+            return Recipe.objects.filter(
+                shopping_list__user=self.request.user
+            )
         return queryset

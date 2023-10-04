@@ -7,7 +7,7 @@ from djoser.serializers import \
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorites, ShoppingList
 
 from .validation import (validate_cooking_time, validate_ingredients,
                          validate_tags)
@@ -278,16 +278,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         """
         Определение, добавлен ли рецепт в избранное.
         """
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.favorited_by_users.filter(user=request.user).exists()
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Favorites.objects.filter(recipe=obj.id, user=user).exists()
         return False
 
     def get_is_in_shopping_cart(self, obj):
         """
         Определение, добавлен ли рецепт в корзину покупок.
         """
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.shoppinglist_set.filter(user=request.user).exists()
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return ShoppingList.objects.filter(recipe=obj.id, user=user).exists()
         return False

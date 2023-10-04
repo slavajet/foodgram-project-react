@@ -32,6 +32,7 @@ class CustomUserViewSet(DjoserUserViewSet):
     serializer_class = CustomUserSerializer
     permission_classes = [AllowAllOrIsAuthenticated | IsAuthenticated]
     pagination_class = Paginator
+    queryset = CustomUser.objects.all()
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None) -> Response | None:
@@ -161,7 +162,7 @@ class RecipeViewSet(ModelViewSet):
         """
         serializer.save(author=self.request.user)
 
-    def perform_destroy(self, instance):
+    def perform_destroy(self, instance) -> None:
         return super().perform_destroy(instance)
 
     @action(
@@ -190,7 +191,13 @@ class RecipeViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            instance = get_object_or_404(ShoppingList, user=user, recipe=recipe)
+            instance = ShoppingList.objects.filter(user=user, recipe=recipe).first()
+            if not instance:
+                return Response(
+                    {'errors': 'Рецепт не был добавлен в список покупок.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -252,6 +259,12 @@ class RecipeViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            favorite_recipe = get_object_or_404(Favorites, user=request.user, recipe=recipe)
+            favorite_recipe = Favorites.objects.filter(user=request.user, recipe=recipe).first()
+            if not favorite_recipe:
+                return Response(
+                    {'errors': 'Рецепт не был добавлен в избранное.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             favorite_recipe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

@@ -3,12 +3,13 @@ from import_export.admin import ImportExportModelAdmin
 
 from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                      ShoppingList, Tag)
-from .resources import IngredientResource
+from .resources import IngredientResource, TagResource
 
 
 @admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'color', 'slug')
+class TagAdmin(ImportExportModelAdmin):
+    resource_class = TagResource
+    list_display = ('name', 'color', 'slug')
     list_filter = ('name', 'color')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
