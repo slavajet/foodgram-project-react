@@ -54,7 +54,7 @@ class CustomUserViewSet(DjoserUserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            created = Subscription.objects.get_or_create(
+            subscriptions, created = Subscription.objects.get_or_create(
                 subscriber=user,
                 subscribing=author
             )
