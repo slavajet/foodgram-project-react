@@ -186,6 +186,7 @@ function App() {
             exact
             path='/user/:id'
             component={User}
+            loggedIn={loggedIn}
             updateOrders={updateOrders}
           />
           <ProtectedRoute

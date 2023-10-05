@@ -35,31 +35,33 @@ class CustomUserViewSet(DjoserUserViewSet):
     queryset = CustomUser.objects.all()
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
-    def subscribe(self, request, id=None) -> Response | None:
+    def subscribe(self, request, *args, **kwargs) -> Response | None:
         """
         Метод позволяющий пользователям подписываться и отписываться (на / от)
         авторов рецептов.
         """
-        user_to_interact = self.get_object()
+        user = request.user
+        user_id = self.kwargs.get('id')
+        author = get_object_or_404(CustomUser, id=user_id)
 
         if request.method == 'POST':
-            if request.user.is_anonymous:
+            if user.is_anonymous:
                 return Response({'detail': 'Сначала нужно авторизоваться.'},
                                 status=status.HTTP_401_UNAUTHORIZED)
-            if request.user == user_to_interact:
+            if user == author:
                 return Response(
                     {'detail': 'Вы не можете подписаться на себя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            subscription, created = Subscription.objects.get_or_create(
-                subscriber=request.user,
-                subscribing=user_to_interact
+            created = Subscription.objects.get_or_create(
+                subscriber=user,
+                subscribing=author
             )
 
             if created:
                 serializer = UserRecipeSerializer(
-                    user_to_interact,
+                    author,
                     context={'request': request}
                 )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -71,8 +73,8 @@ class CustomUserViewSet(DjoserUserViewSet):
 
         elif request.method == 'DELETE':
             if not Subscription.objects.filter(
-                    subscriber=request.user,
-                    subscribing=user_to_interact
+                    subscriber=user,
+                    subscribing=author
             ).exists():
                 return Response(
                     {'detail': 'Подписка не существует.'},
@@ -80,8 +82,8 @@ class CustomUserViewSet(DjoserUserViewSet):
                 )
 
             Subscription.objects.filter(
-                subscriber=request.user,
-                subscribing=user_to_interact
+                subscriber=user,
+                subscribing=author
             ).delete()
             return Response(
                 {'detail': 'Отписка удалась.'},
@@ -95,7 +97,8 @@ class CustomUserViewSet(DjoserUserViewSet):
         Это действие позволяет пользователю получить список пользователей,
         на которых он подписан.
         """
-        queryset = CustomUser.objects.filter(subscriptions__subscriber=request.user)
+        user = request.user
+        queryset = CustomUser.objects.filter(subscribers__subscriber=user)
         page = self.paginate_queryset(queryset)
         serializer = UserRecipeSerializer(
             page,
