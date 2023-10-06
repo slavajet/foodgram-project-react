@@ -1,8 +1,10 @@
-# validation.py
 from rest_framework import serializers
 
 
 def validate_tags(tags):
+    """
+    Функция валидации тегов для рецепта.
+    """
     if not tags:
         raise serializers.ValidationError("Теги не могут быть пустыми.")
     tag_ids = set()
@@ -13,11 +15,17 @@ def validate_tags(tags):
 
 
 def validate_cooking_time(cooking_time):
+    """
+    Функция валидации времени приготовления рецепта.
+    """
     if cooking_time is not None and cooking_time < 1:
         raise serializers.ValidationError("Время приготовления должно быть 1 или больше.")
 
 
 def validate_ingredients(ingredients):
+    """
+    Функция валидации ингредиентов для рецепта.
+    """
     if not ingredients:
         raise serializers.ValidationError("Нельзя приготовить что либо без ингредиентов.")
     ingredient_ids = set()

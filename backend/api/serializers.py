@@ -7,7 +7,8 @@ from djoser.serializers import \
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorites, ShoppingList
+from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingList, Tag)
 
 from .validation import (validate_cooking_time, validate_ingredients,
                          validate_tags)
