@@ -25,10 +25,14 @@ class IngredientAdmin(ImportExportModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'cooking_time', 'author', 'pub_date')
-    list_filter = ('name', 'cooking_time', 'author', 'tags')
+    list_display = ('name', 'cooking_time', 'author', 'pub_date', 'total_favorites')
+    list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author__username')
     date_hierarchy = 'pub_date'
+
+    def total_favorites(self, obj):
+        """Вычисляет общее кол-во добавления в избранное для каждого рецепта"""
+        return obj.favorited_by_users.count()
 
 
 @admin.register(RecipeIngredient)

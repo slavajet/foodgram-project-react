@@ -5,10 +5,9 @@ from django.core.files.base import ContentFile
 from djoser.serializers import \
     UserCreateSerializer as DjoserUserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from rest_framework import serializers
-
 from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                             ShoppingList, Tag)
+from rest_framework import serializers
 
 from .validation import (validate_cooking_time, validate_ingredients,
                          validate_tags)
@@ -242,19 +241,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         """
         Обновление существующего рецепта.
         """
-        instance.tags.clear()
-        instance.ingredients.clear()
+        tags = validated_data.pop("tags")
+        ingredients = validated_data.pop("ingredients")
+        image = validated_data.get("image")
+
+        if image is not None:
+            instance.image = image
+
+        if tags:
+            instance.tags.clear()
+            instance.tags.set(tags)
+
+        if ingredients:
+            instance.ingredients.clear()
+            self.add_ingredients(ingredients, instance)
+
         instance.name = validated_data['name']
         instance.text = validated_data['text']
         instance.cooking_time = validated_data['cooking_time']
-        instance.image = validated_data['image']
-        instance.save()
-        tags = validated_data.get('tags', [])
-        instance.tags.set(tags)
-        ingredients = validated_data.get('ingredients', [])
-        self.add_ingredients(ingredients, instance)
-
-        return instance
+        return super().update(instance, validated_data)
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):

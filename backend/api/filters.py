@@ -1,6 +1,5 @@
 import django_filters
 from django.contrib.auth import get_user_model
-
 from recipes.models import Ingredient, Recipe
 
 User = get_user_model()
@@ -8,9 +7,9 @@ User = get_user_model()
 
 class IngredientFilter(django_filters.FilterSet):
     """
-    Позволяет произвести фильтрацию тегов по названию.
+    Позволяет произвести фильтрацию ингредиентов по названию.
     """
-    name = django_filters.CharFilter(field_name='name', lookup_expr='iexact')
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
         model = Ingredient

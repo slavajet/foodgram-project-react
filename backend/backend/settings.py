@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'corsheaders',
     'import_export',
     'recipes',
     'users',
@@ -36,6 +37,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -126,6 +128,11 @@ REST_FRAMEWORK = {
     ],
 }
 
+CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = ["https://foodgram59.ddns.net", "https://130.193.55.153"]
+
+CORS_ALLOWED_ORIGINS = ["https://foodgram59.ddns.net", "https://130.193.55.153"]
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
