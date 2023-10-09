@@ -8,7 +8,8 @@ class AllowAllOrIsAuthenticated(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         """
-        Проверяет, имеет ли пользователь разрешение на выполнение указанного действия.
+        Проверяет, имеет ли пользователь разрешение на выполнение указанного
+        действия.
         """
         if view.action == 'me':
             return request.user.is_authenticated
