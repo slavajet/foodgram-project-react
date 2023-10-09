@@ -166,6 +166,9 @@ class RecipeViewSet(ModelViewSet):
         serializer.save(author=self.request.user)
 
     def perform_destroy(self, instance) -> None:
+        """
+        Удаление рецепта.
+        """
         return super().perform_destroy(instance)
 
     @action(

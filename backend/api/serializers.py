@@ -129,7 +129,7 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeShortSerializer(serializers.ModelSerializer):
     """
-    Сериалайзер для получения краткой информации о рецептах.
+    Сериализатор для получения краткой информации о рецептах.
     """
     image = Base64ImageField()
 
