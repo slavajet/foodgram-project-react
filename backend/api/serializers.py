@@ -146,8 +146,8 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для ингредиентов в рецептах.
-    Используется для предоставления информации об ингредиентах, используемых в рецептах.
+    Сериализатор для ингредиентов в рецептах. Используется для предоставления
+    информации об ингредиентах, используемых в рецептах.
     """
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     amount = serializers.IntegerField(write_only=True)
@@ -160,7 +160,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class AmountSerializer(serializers.ModelSerializer):
     """
     Сериализатор для количества ингредиентов в рецептах.
-    Используется для предоставления информации о количестве ингредиентов, используемых в рецептах.
+    Используется для предоставления информации о количестве ингредиентов,
+    используемых в рецептах.
     """
     id = serializers.ReadOnlyField(source="ingredient.id")
     name = serializers.ReadOnlyField(source="ingredient.name")

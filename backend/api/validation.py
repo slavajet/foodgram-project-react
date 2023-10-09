@@ -12,7 +12,6 @@ def validate_tags(tags):
         if tag.id in tag_ids:
             raise serializers.ValidationError(
                 "Нельзя использовать одинаковые теги."
-            
             )
         tag_ids.add(tag.id)
 

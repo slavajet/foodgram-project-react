@@ -22,7 +22,8 @@ class IsRecipeAuthorOrReadOnly(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         """
-        Проверяет, имеет ли пользователь разрешение на выполнение указанного действия над объектом.
+        Проверяет, имеет ли пользователь разрешение на выполнение указанного
+        действия над объектом.
         """
         if request.method in permissions.SAFE_METHODS:
             return True
