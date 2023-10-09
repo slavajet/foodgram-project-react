@@ -33,7 +33,11 @@ class CustomUserViewSet(DjoserUserViewSet):
     pagination_class = Paginator
     queryset = CustomUser.objects.all()
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
     def subscribe(self, request, *args, **kwargs) -> Response | None:
         """
         Метод позволяющий пользователям подписываться и отписываться (на / от)
@@ -63,7 +67,7 @@ class CustomUserViewSet(DjoserUserViewSet):
                     author,
                     context={'request': request}
                 )
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)  # noqa: E501
             else:
                 return Response(
                     {'detail': 'Вы уже подписаны на этого пользователя.'},
@@ -149,7 +153,7 @@ class RecipeViewSet(ModelViewSet):
     def get_serializer_class(self) -> type:
         """
         Определение класса сериализатора для представления.
-        Возвращает класс сериализатора в зависимости от действия (action) запроса.
+        Возвращает класс сериализатора в зависимости от действия (action).
         Для GET-запросов используется `RecipeReadSerializer`,
         а для остальных действий - `RecipeWriteSerializer`.
         """
@@ -197,7 +201,7 @@ class RecipeViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            instance = ShoppingList.objects.filter(user=user, recipe=recipe).first()
+            instance = ShoppingList.objects.filter(user=user, recipe=recipe).first()  # noqa: E501
             if not instance:
                 return Response(
                     {'errors': 'Рецепт не был добавлен в список покупок.'},
@@ -231,9 +235,9 @@ class RecipeViewSet(ModelViewSet):
         shopping_cart = [f'Список покупок {user}.\n']
         for ingredient in ingredients:
             shopping_cart.append(
-                f'{ingredient["recipe__recipe_ingredients__ingredient__name"]} - '
+                f'{ingredient["recipe__recipe_ingredients__ingredient__name"]} - '  # noqa: E501
                 f'{ingredient["amount"]} '
-                f'{ingredient["recipe__recipe_ingredients__ingredient__measurement_unit"]}\n'
+                f'{ingredient["recipe__recipe_ingredients__ingredient__measurement_unit"]}\n'  # noqa: E501
             )
 
         file_name = f'{user.username}_shopping_cart.txt'
@@ -255,7 +259,7 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            if Favorites.objects.filter(user=request.user, recipe=recipe).exists():
+            if Favorites.objects.filter(user=request.user, recipe=recipe).exists():  # noqa: E501
                 return Response(
                     {'errors': 'Рецепт уже добавлен в избранное.'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -265,7 +269,7 @@ class RecipeViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            favorite_recipe = Favorites.objects.filter(user=request.user, recipe=recipe).first()
+            favorite_recipe = Favorites.objects.filter(user=request.user, recipe=recipe).first()  # noqa: E501
             if not favorite_recipe:
                 return Response(
                     {'errors': 'Рецепт не был добавлен в избранное.'},

@@ -70,7 +70,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
-    image = models.ImageField(blank=True, null=True, verbose_name='Изображение')
+    image = models.ImageField(blank=True, null=True, verbose_name='Изображение')  # noqa: E501
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -184,4 +184,4 @@ class ShoppingList(models.Model):
         verbose_name_plural = 'Списки покупок'
 
     def __str__(self) -> str:
-        return f'{self.user} добавил в список покупок рецепт: {self.recipe.name}'
+        return f'{self.user} добавил в список покупок рецепт: {self.recipe.name}'  # noqa: E501

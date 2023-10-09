@@ -59,7 +59,8 @@ class UserRecipeSerializer(CustomUserSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta(CustomUserSerializer.Meta):
-        fields = COMMON_USER_FIELDS + ('is_subscribed', 'recipes', 'recipes_count')
+        fields = COMMON_USER_FIELDS + ('is_subscribed',
+                                       'recipes', 'recipes_count')
         read_only_fields = ('id',)
 
     def get_recipes(self, obj) -> list:
@@ -68,7 +69,7 @@ class UserRecipeSerializer(CustomUserSerializer):
         recipes_limit: Если параметр указан в запросе, то ограничивает кол-во
         рецептов в ответе.
         """
-        recipes_limit = self.context['request'].query_params.get('recipes_limit')
+        recipes_limit = self.context['request'].query_params.get('recipes_limit')  # noqa: E501
         recipes = obj.recipes.all()
 
         if recipes_limit:
@@ -278,7 +279,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = COMMON_RECIPE_FIELDS + ('is_favorited', 'is_in_shopping_cart',)
+        fields = COMMON_RECIPE_FIELDS + ('is_favorited',
+                                         'is_in_shopping_cart',)
 
     def get_is_favorited(self, obj):
         """
@@ -295,5 +297,5 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         """
         user = self.context['request'].user
         if user.is_authenticated:
-            return ShoppingList.objects.filter(recipe=obj.id, user=user).exists()
+            return ShoppingList.objects.filter(recipe=obj.id, user=user).exists()  # noqa: E501
         return False

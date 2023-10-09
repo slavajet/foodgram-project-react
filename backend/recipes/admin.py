@@ -25,7 +25,8 @@ class IngredientAdmin(ImportExportModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'cooking_time', 'author', 'pub_date', 'total_favorites')
+    list_display = ('name', 'cooking_time', 'author',
+                    'pub_date', 'total_favorites')
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author__username')
     date_hierarchy = 'pub_date'
