@@ -219,7 +219,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         Проверяет валидность данных при создании или обновлении рецепта.
         """
         tags = data.get('tags', [])
-        cooking_time = data.get('cooking_time')
         ingredients = data.get('ingredients', [])
 
         validate_tags(tags)
