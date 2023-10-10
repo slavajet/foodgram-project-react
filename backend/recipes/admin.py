@@ -5,6 +5,22 @@ from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                      ShoppingList, Tag)
 from .resources import IngredientResource, TagResource
 
+MIN_NUM = 1
+
+
+class RecipeIngredientInline(admin.TabularInline):
+    """
+    Inline модель для ингредиентов рецепта.
+    Позволяет редактировать и добавлять ингредиенты непосредственно на странице
+    редактирования рецепта в административной панели.
+    Attributes:
+        model: Модель, представляющая связь между рецептом и ингредиентом.
+        min_num : Минимальное количество ингредиентов, которое должно быть
+        связано с рецептом.
+    """
+    model = RecipeIngredient
+    min_num = MIN_NUM
+
 
 @admin.register(Tag)
 class TagAdmin(ImportExportModelAdmin):
@@ -30,6 +46,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author__username')
     date_hierarchy = 'pub_date'
+    inlines = (RecipeIngredientInline,)
 
     def total_favorites(self, obj):
         """Вычисляет общее кол-во добавления в избранное для каждого рецепта"""

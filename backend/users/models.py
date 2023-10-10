@@ -13,13 +13,13 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
-    def __str__(self):
-        return self.username
-
     class Meta:
         ordering = ['-id']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+    def __str__(self) -> str:
+        return self.username
 
 
 class Subscription(models.Model):
@@ -40,6 +40,7 @@ class Subscription(models.Model):
     )
 
     class Meta:
+        ordering = ['-id']
         unique_together = ('subscriber', 'subscribing')
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'

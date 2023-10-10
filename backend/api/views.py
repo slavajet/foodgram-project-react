@@ -1,9 +1,9 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from recipes.models import Favorites, Ingredient, Recipe, ShoppingList, Tag
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
@@ -11,7 +11,6 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import Paginator
@@ -20,6 +19,8 @@ from .serializers import (CustomUserSerializer, IngredientSerializer,
                           RecipeReadSerializer, RecipeShortSerializer,
                           RecipeWriteSerializer, TagSerializer,
                           UserRecipeSerializer)
+from recipes.models import Ingredient, Recipe, ShoppingList, Tag
+from users.models import CustomUser, Subscription
 
 
 class CustomUserViewSet(DjoserUserViewSet):
@@ -48,9 +49,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         author = get_object_or_404(CustomUser, id=user_id)
 
         if request.method == 'POST':
-            if user.is_anonymous:
-                return Response({'detail': 'Сначала нужно авторизоваться.'},
-                                status=status.HTTP_401_UNAUTHORIZED)
+
             if user == author:
                 return Response(
                     {'detail': 'Вы не можете подписаться на себя.'},
@@ -68,26 +67,22 @@ class CustomUserViewSet(DjoserUserViewSet):
                     context={'request': request}
                 )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)  # noqa: E501
-            else:
-                return Response(
-                    {'detail': 'Вы уже подписаны на этого пользователя.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+
+            return Response(
+                {'detail': 'Вы уже подписаны на этого пользователя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         elif request.method == 'DELETE':
-            if not Subscription.objects.filter(
-                    subscriber=user,
-                    subscribing=author
-            ).exists():
+            subscriptions = user.subscriptions.filter(subscribing=author)
+
+            if not subscriptions.exists():
                 return Response(
                     {'detail': 'Подписка не существует.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            subscriptions.delete()
 
-            Subscription.objects.filter(
-                subscriber=user,
-                subscribing=author
-            ).delete()
             return Response(
                 {'detail': 'Отписка удалась.'},
                 status=status.HTTP_204_NO_CONTENT
@@ -190,18 +185,18 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            if ShoppingList.objects.filter(user=user, recipe=recipe).exists():
+            if user.shopping_list.filter(recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепт уже добавлен в список покупок.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            ShoppingList.objects.create(user=user, recipe=recipe)
+            user.shopping_list.create(recipe=recipe)
             serializer = RecipeShortSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            instance = ShoppingList.objects.filter(user=user, recipe=recipe).first()  # noqa: E501
+            instance = user.shopping_list.filter(recipe=recipe).first()
             if not instance:
                 return Response(
                     {'errors': 'Рецепт не был добавлен в список покупок.'},
@@ -234,10 +229,16 @@ class RecipeViewSet(ModelViewSet):
 
         shopping_cart = [f'Список покупок {user}.\n']
         for ingredient in ingredients:
+            ingredient_name = ingredient[
+                "recipe__recipe_ingredients__ingredient__name"
+            ]
+            amount = ingredient["amount"]
+            unit = ingredient[
+                "recipe__recipe_ingredients__ingredient__measurement_unit"
+            ]
+
             shopping_cart.append(
-                f'{ingredient["recipe__recipe_ingredients__ingredient__name"]} - '  # noqa: E501
-                f'{ingredient["amount"]} '
-                f'{ingredient["recipe__recipe_ingredients__ingredient__measurement_unit"]}\n'  # noqa: E501
+                f'{ingredient_name} - {amount} {unit}\n'
             )
 
         file_name = f'{user.username}_shopping_cart.txt'
@@ -257,24 +258,24 @@ class RecipeViewSet(ModelViewSet):
         Метод (добавления / удаления) рецепта (в / из) избранное.
         """
         recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
 
         if request.method == 'POST':
-            if Favorites.objects.filter(user=request.user, recipe=recipe).exists():  # noqa: E501
+            if user.favorite_recipes.filter(pk=recipe.pk).exists():
                 return Response(
                     {'errors': 'Рецепт уже добавлен в избранное.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            Favorites.objects.create(user=request.user, recipe=recipe)
+            user.favorite_recipes.add(recipe)
             serializer = RecipeShortSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            favorite_recipe = Favorites.objects.filter(user=request.user, recipe=recipe).first()  # noqa: E501
-            if not favorite_recipe:
+            if not user.favorite_recipes.filter(pk=recipe.pk).exists():
                 return Response(
                     {'errors': 'Рецепт не был добавлен в избранное.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            favorite_recipe.delete()
+            user.favorite_recipes.remove(recipe)
             return Response(status=status.HTTP_204_NO_CONTENT)

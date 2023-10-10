@@ -1,7 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 User = get_user_model()
+
+MIN_VALUE = 1
+MAX_VALUE = 32000
 
 
 class Tag(models.Model):
@@ -26,13 +30,13 @@ class Tag(models.Model):
         verbose_name='Уникальный слаг'
     )
 
-    def __str__(self) -> str:
-        return self.name
-
     class Meta:
         ordering = ('slug',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -50,13 +54,13 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения'
     )
 
-    def __str__(self) -> str:
-        return f'{self.name}, {self.measurement_unit}'
-
     class Meta:
         ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self) -> str:
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -69,8 +73,16 @@ class Recipe(models.Model):
     """
     name = models.CharField(max_length=200, verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.IntegerField(verbose_name='Время приготовления')
-    image = models.ImageField(blank=True, null=True, verbose_name='Изображение')  # noqa: E501
+    cooking_time = models.PositiveSmallIntegerField(
+        verbose_name='Время приготовления',
+        validators=[MinValueValidator(MIN_VALUE),
+                    MaxValueValidator(MAX_VALUE)]
+    )
+    image = models.ImageField(
+        blank=True,
+        null=True,
+        verbose_name='Изображение'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -90,13 +102,13 @@ class Recipe(models.Model):
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
-    def __str__(self) -> str:
-        return self.name
-
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class RecipeIngredient(models.Model):
@@ -118,14 +130,19 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Ингредиент'
     )
-    amount = models.PositiveIntegerField(verbose_name='Кол-во ингридиентов')
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Кол-во ингредиентов',
+        validators=[MinValueValidator(MIN_VALUE),
+                    MaxValueValidator(MAX_VALUE)]
+    )
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Ингредиент рецепта'
+        verbose_name_plural = 'Ингредиенты рецепта'
 
     def __str__(self) -> str:
         return f"{self.recipe.name} - {self.ingredient.name}"
-
-    class Meta:
-        verbose_name = 'Ингредиент рецепта'
-        verbose_name_plural = 'Ингредиенты рецепта'
 
 
 class Favorites(models.Model):
@@ -150,6 +167,7 @@ class Favorites(models.Model):
     )
 
     class Meta:
+        ordering = ['-id']
         unique_together = ('user', 'recipe')
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные рецепты'
@@ -180,8 +198,9 @@ class ShoppingList(models.Model):
     )
 
     class Meta:
+        ordering = ['-id']
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
 
     def __str__(self) -> str:
-        return f'{self.user} добавил в список покупок рецепт: {self.recipe.name}'  # noqa: E501
+        return f'{self.user} добавил в список покупок: {self.recipe.name}'
