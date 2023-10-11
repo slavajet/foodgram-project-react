@@ -48,7 +48,7 @@ class RecipeFilter(django_filters.FilterSet):
         Метод для фильтрации рецептов по избранному.
         """
         if value and self.request.user.is_authenticated:
-            return Recipe.objects.filter(
+            return queryset.filter(
                 favorited_by_users__user=self.request.user
             )
         return queryset
@@ -58,7 +58,7 @@ class RecipeFilter(django_filters.FilterSet):
         Метод для фильтрации рецептов по добавленным в корзину.
         """
         if value and self.request.user.is_authenticated:
-            return Recipe.objects.filter(
+            return queryset.filter(
                 shopping_list__user=self.request.user
             )
         return queryset

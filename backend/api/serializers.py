@@ -41,13 +41,15 @@ class CustomUserSerializer(DjoserUserSerializer):
         model = User
         fields = COMMON_USER_FIELDS + ('is_subscribed',)
 
-    def get_is_subscribed(self, user):
+    def get_is_subscribed(self, obj):
         """
         Метод для определения, подписан ли текущий пользователь
         на данного пользователя.
         """
+        user = self.context.get("request").user
+
         if user.is_authenticated:
-            return user.subscriptions.filter(subscriber=user).exists()
+            return user.subscriptions.filter(subscribing=obj).exists()
         return None
 
     def validate(self, data):

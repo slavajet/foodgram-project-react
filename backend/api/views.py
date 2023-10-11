@@ -263,21 +263,22 @@ class RecipeViewSet(ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
-            if user.favorite_recipes.filter(pk=recipe.pk).exists():
+            if user.favorited_by_users.filter(recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепт уже добавлен в избранное.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            user.favorite_recipes.add(recipe)
+            user.favorited_by_users.create(recipe=recipe)
             serializer = RecipeShortSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            if not user.favorite_recipes.filter(pk=recipe.pk).exists():
+            instance = user.favorited_by_users.filter(recipe=recipe).first()
+            if not instance:
                 return Response(
                     {'errors': 'Рецепт не был добавлен в избранное.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            user.favorite_recipes.remove(recipe)
+            instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
