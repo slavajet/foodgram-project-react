@@ -66,7 +66,9 @@ class CustomUserViewSet(DjoserUserViewSet):
                     author,
                     context={'request': request}
                 )
-                return Response(serializer.data, status=status.HTTP_201_CREATED)  # noqa: E501
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED)
 
             return Response(
                 {'detail': 'Вы уже подписаны на этого пользователя.'},
