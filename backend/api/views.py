@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import (IsAuthenticated,
@@ -20,7 +20,7 @@ from .serializers import (CustomUserSerializer, IngredientSerializer,
                           RecipeWriteSerializer, TagSerializer,
                           UserRecipeSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingList, Tag
-from users.models import CustomUser, Subscription
+from users.models import CustomUser
 
 
 class CustomUserViewSet(DjoserUserViewSet):
@@ -47,35 +47,28 @@ class CustomUserViewSet(DjoserUserViewSet):
         user = request.user
         user_id = self.kwargs.get('id')
         author = get_object_or_404(CustomUser, id=user_id)
+        custom_user_serializer = CustomUserSerializer(
+            context={'request': request}
+        )
 
         if request.method == 'POST':
-
-            if user == author:
+            try:
+                subscriptions = custom_user_serializer.subscribe(author)
+            except serializers.ValidationError as e:
                 return Response(
-                    {'detail': 'Вы не можете подписаться на себя.'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-            subscriptions, created = Subscription.objects.get_or_create(
-                subscriber=user,
-                subscribing=author
+            serializer = UserRecipeSerializer(
+                author,
+                context={'request': request}
             )
-
-            if created:
-                serializer = UserRecipeSerializer(
-                    author,
-                    context={'request': request}
-                )
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED)
-
             return Response(
-                {'detail': 'Вы уже подписаны на этого пользователя.'},
-                status=status.HTTP_400_BAD_REQUEST
+                serializer.data,
+                status=status.HTTP_201_CREATED
             )
 
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             subscriptions = user.subscriptions.filter(subscribing=author)
 
             if not subscriptions.exists():
@@ -83,8 +76,8 @@ class CustomUserViewSet(DjoserUserViewSet):
                     {'detail': 'Подписка не существует.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            subscriptions.delete()
 
+            subscriptions.delete()
             return Response(
                 {'detail': 'Отписка удалась.'},
                 status=status.HTTP_204_NO_CONTENT
@@ -185,28 +178,35 @@ class RecipeViewSet(ModelViewSet):
         """
         user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = RecipeWriteSerializer()
 
         if request.method == 'POST':
-            if user.shopping_list.filter(recipe=recipe).exists():
+            try:
+                serializer.add_to_shopping_cart(user, recipe)
+                serializer = RecipeShortSerializer(recipe)
                 return Response(
-                    {'errors': 'Рецепт уже добавлен в список покупок.'},
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response(
+                    {'errors': str(e)},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        if request.method == 'DELETE':
+            shopping_cart = user.shopping_list.filter(recipe=recipe)
 
-            user.shopping_list.create(recipe=recipe)
-            serializer = RecipeShortSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        elif request.method == 'DELETE':
-            instance = user.shopping_list.filter(recipe=recipe).first()
-            if not instance:
+            if not shopping_cart.exist():
                 return Response(
                     {'errors': 'Рецепт не был добавлен в список покупок.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            instance.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            shopping_cart.delete()
+            return Response(
+                {'detail': 'Рецепт удален из списка покупок'},
+                status=status.HTTP_204_NO_CONTENT
+            )
 
     @action(
         detail=False,
@@ -259,18 +259,23 @@ class RecipeViewSet(ModelViewSet):
         """
         Метод (добавления / удаления) рецепта (в / из) избранное.
         """
-        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = RecipeWriteSerializer()
 
         if request.method == 'POST':
-            if user.favorited_by_users.filter(recipe=recipe).exists():
+            try:
+                serializer.add_to_favorites(user, recipe)
+                serializer = RecipeShortSerializer(recipe)
                 return Response(
-                    {'errors': 'Рецепт уже добавлен в избранное.'},
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response(
+                    {'errors': str(e)},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            user.favorited_by_users.create(recipe=recipe)
-            serializer = RecipeShortSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
             instance = user.favorited_by_users.filter(recipe=recipe).first()

@@ -1,8 +1,8 @@
 import base64
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from django.contrib.auth import get_user_model
 from djoser.serializers import (UserCreateSerializer
                                 as DjoserUserCreateSerializer)
 from djoser.serializers import UserSerializer as DjoserUserSerializer
@@ -10,6 +10,7 @@ from rest_framework import serializers
 
 from .validation import validate_ingredients, validate_tags
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -52,17 +53,25 @@ class CustomUserSerializer(DjoserUserSerializer):
             return user.subscriptions.filter(subscribing=obj).exists()
         return None
 
-    def validate(self, data):
-        """
-        Метод для валидации данных перед сохранением.
-        Проверяет, что пользователь не пытается подписаться на самого себя.
-        """
-        request = self.context.get('request')
-        if request and request.user == data.get('id'):
+    def subscribe(self, author) -> Subscription:
+        user = self.context.get("request").user
+
+        if user == author:
             raise serializers.ValidationError(
-                {'detail': 'Вы не можете подписаться на себя.'}
+                'Вы не можете подписаться на себя.'
             )
-        return data
+
+        subscriptions, created = Subscription.objects.get_or_create(
+            subscriber=user,
+            subscribing=author
+        )
+
+        if not created:
+            raise serializers.ValidationError(
+                'Вы уже подписаны на этого пользователя.'
+            )
+
+        return subscriptions
 
 
 class UserRecipeSerializer(CustomUserSerializer):
@@ -284,6 +293,22 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.text = validated_data['text']
         instance.cooking_time = validated_data['cooking_time']
         return super().update(instance, validated_data)
+
+    def add_to_shopping_cart(self, user, recipe) -> None:
+        if user.shopping_list.filter(recipe=recipe).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в список покупок.'
+            )
+
+        user.shopping_list.create(recipe=recipe)
+
+    def add_to_favorites(self, user, recipe) -> None:
+        if user.favorited_by_users.filter(recipe=recipe).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в избранное.'
+            )
+
+        user.favorited_by_users.create(recipe=recipe)
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
